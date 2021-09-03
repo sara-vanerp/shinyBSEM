@@ -45,3 +45,4 @@ plot_fun <- function(fit, layout = "layout_as_tree"){
   pmod <- plot(prep)
   return(pmod)
 }
+
