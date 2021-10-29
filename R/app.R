@@ -53,7 +53,10 @@ ui <- fluidPage(
             plotlyOutput("mod.plot"),
             
             # plot of the specified prior
-            uiOutput("priorOutput")
+            uiOutput("priorOutput"),
+            
+            # chosen prior settings
+            tableOutput("priorVals")
         )
     )
 )
@@ -75,11 +78,13 @@ server <- function(input, output) {
         mod.lbl <- label_syntax_fun(toString(input$model))
         #mod.fit <- sem(mod.lbl, data = dat())
         mod.fit <- sem(mod.lbl, data = PoliticalDemocracy) #TODO: use input data instead of placeholder
+        outFit <- list(modLbl = mod.lbl, modFit = mod.fit)
+        return(outFit)
     })
     
     # plot the model
     output$mod.plot <- renderPlotly({
-        ggplotly(plot_fun(fit()), tooltip = "text")
+        ggplotly(plot_fun(fit()$modFit), tooltip = "text")
     })
     
     click_data <- reactive({
@@ -115,6 +120,17 @@ server <- function(input, output) {
                         theme(panel.border = element_blank(), panel.grid.major = element_blank(),
                               panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
                               text = element_text(size = 20))
+                }),
+                
+                # TODO: clean this up; now the normal distribution is used in 3 places and evaluated separately each tim
+                # TODO: add max decimal places to limits
+                # TODO: once working and fixed, extend to other prior types
+                renderText({
+                    paste0("With this prior approximately 95% prior probability is assigned in the range ", 
+                           quantile(rnorm(100000, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 
+                                    probs = c(.025, .975)[1]), " - ",
+                           quantile(rnorm(100000, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 
+                                             probs = c(.025, .975)[2]))
                 })
             )
         } else if(grepl("v", click_data()) == TRUE){ # variances
@@ -179,6 +195,21 @@ server <- function(input, output) {
                 })
             )
         }
+    })
+    
+    # return specified priors
+    priors <- reactiveValues()
+    
+    observeEvent(input$model, {
+        priors$df <- do.call(rbind, lapply(fit()$modLbl$label, init_df))
+    })
+    
+    addPrior <- observeEvent(input$fixLoadPrior, {
+        priors$df[1, 1] <- "hi" #TODO: adapt so that the df is filled correctly
+    })
+    
+    output$priorVals <- renderTable({ 
+        priors$df
     })
     
 }

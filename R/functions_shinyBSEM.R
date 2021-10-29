@@ -46,3 +46,16 @@ plot_fun <- function(fit, layout = "layout_as_tree"){
   return(pmod)
 }
 
+## Funtion to initialize a data frame to store the priors in
+init_df <- function(pars){
+  if(grepl("l", pars) == TRUE){
+    cbind.data.frame(Parameter = pars, Prior = "Normal", 'Hyperparameter 1' = NA, 'Hyperparameter 2' = NA)
+  } else if(grepl("v", pars) == TRUE){
+    cbind.data.frame(Parameter = pars, Prior = "Gamma", 'Hyperparameter 1' = NA, 'Hyperparameter 2' = NA)
+  } else if(grepl("r", pars) == TRUE){
+    cbind.data.frame(Parameter = pars, Prior = "Beta", 'Hyperparameter 1' = NA, 'Hyperparameter 2' = NA)
+  } else if(grepl("b", pars) == TRUE){
+    cbind.data.frame(Parameter = pars, Prior = "Normal", 'Hyperparameter 1' = NA, 'Hyperparameter 2' = NA)
+  }
+}
+
