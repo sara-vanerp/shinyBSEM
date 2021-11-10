@@ -56,7 +56,8 @@ ui <- fluidPage(
             uiOutput("priorOutput"),
             
             # chosen prior settings
-            tableOutput("priorVals")
+            tableOutput("priorVals"),
+        
         )
     )
 )
@@ -205,7 +206,27 @@ server <- function(input, output) {
     })
     
     addPrior <- observeEvent(input$fixLoadPrior, {
-        priors$df[1, 1] <- "hi" #TODO: adapt so that the df is filled correctly
+      r <- which(priors$df$Parameter == click_data())
+        priors$df[r, "Hyperparameter 1"] <- input$priorMeanInputLoad
+        priors$df[r, "Hyperparameter 2"] <- input$priorScaleInputLoad
+      })
+    
+    addPrior2 <- observeEvent(input$fixVarPrior, {
+      r <- which(priors$df$Parameter == click_data())
+      priors$df[r, "Hyperparameter 1"] <- input$priorShapeInputVar
+      priors$df[r, "Hyperparameter 2"] <- input$priorRateInputVar
+    })
+    
+    addPrior3 <- observeEvent(input$fixCorrPrior, {
+      r <- which(priors$df$Parameter == click_data())
+      priors$df[r, "Hyperparameter 1"] <- input$priorShapeInputCorr1
+      priors$df[r, "Hyperparameter 2"] <- input$priorShapeInputCorr2
+    })
+    
+    addPrior4 <- observeEvent(input$fixRegrPrior, {
+      r <- which(priors$df$Parameter == click_data())
+      priors$df[r, "Hyperparameter 1"] <- input$priorMeanInputRegr
+      priors$df[r, "Hyperparameter 2"] <- input$priorScaleInputRegr
     })
     
     output$priorVals <- renderTable({ 
