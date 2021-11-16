@@ -59,5 +59,28 @@ init_df <- function(pars){
   }
 }
 
+## Function to set all priors to the blavaan default
+def_prior <- function(df){
+  load <- grep("l", df$pars)
+  df[load, "Hyperparameter 1"] <- 0
+  df[load, "Hyperparameter 2"] <- 10
+  
+  vars <- grep("v", df$pars)
+  df[vars, "Hyperparameter 1"] <- 1
+  df[vars, "Hyperparameter 2"] <- .5
+  
+  cors <- grep("r", df$pars)
+  df[cors, "Hyperparameter 1"] <- 1
+  df[cors, "Hyperparameter 2"] <- 1
+  
+  regs <- grep("b", df$pars)
+  df[regs, "Hyperparameter 1"] <- 0
+  df[regs, "Hyperparameter 2"] <- 10
+  
+  return(df)
+}
+
+
+
 
 

@@ -57,6 +57,10 @@ ui <- fluidPage(
             
             # chosen prior settings
             tableOutput("priorVals"),
+            
+            # use blavaan default priors
+            actionButton("defaultPriors", 
+                         "Use the blavaan default priors")
         
         )
     )
@@ -229,10 +233,14 @@ server <- function(input, output) {
       priors$df[r, "Hyperparameter 2"] <- input$priorScaleInputRegr
     })
     
-    output$priorVals <- renderTable({ 
-        priors$df
+    # Set blavaan default priors if requested
+    addDefPrior <- observeEvent(input$defaultPriors, { # FIX: This does not do anything yet
+      priors$df <- def_prior(priors$df)
     })
     
+    output$priorVals <- renderTable({ 
+      priors$df
+    })
 }
 
 shinyApp(ui = ui, server = server)
