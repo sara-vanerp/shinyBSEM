@@ -46,22 +46,30 @@ ui <- fluidPage(
                             y4 ~~ y8
                             y6 ~~ y8 ",
                           rows = 15),
+            
+            actionButton("estMod", "Estimate the model"),
         ),
             
         mainPanel(
             # path diagram
             plotlyOutput("mod.plot"),
             
+            # print warning if defaults are used
+            textOutput("defaultWarn"),
+            
+            # use blavaan default priors
+            actionButton("defaultPriors", 
+                         "Use the blavaan default priors"),
+            
+            # print warning if the "estimate" button is clicked but not all priors are specified
+            textOutput("estWarn"),
+            
             # plot of the specified prior
             uiOutput("priorOutput"),
             
             # chosen prior settings
             tableOutput("priorVals"),
-            
-            # use blavaan default priors
-            actionButton("defaultPriors", 
-                         "Use the blavaan default priors")
-        
+
         )
     )
 )
@@ -234,13 +242,53 @@ server <- function(input, output) {
     })
     
     # Set blavaan default priors if requested
-    addDefPrior <- observeEvent(input$defaultPriors, { # FIX: This does not do anything yet
-      priors$df <- def_prior(priors$df)
+    addDefPrior <- observeEvent(input$defaultPriors, { 
+      # default priors loadings
+      sel1 <- grep("l", priors$df$Parameter)
+      priors$df[sel1, "Hyperparameter 1"] <- 0
+      priors$df[sel1, "Hyperparameter 2"] <- 10
+      # default priors variances
+      sel2 <- grep("v", priors$df$Parameter)
+      priors$df[sel2, "Hyperparameter 1"] <- 1
+      priors$df[sel2, "Hyperparameter 2"] <- 0.5
+      # default priors correlations
+      sel3 <- grep("r", priors$df$Parameter)
+      priors$df[sel3, "Hyperparameter 1"] <- 1
+      priors$df[sel3, "Hyperparameter 2"] <- 1
+      # default priors structural regression coefficients
+      sel4 <- grep("b", priors$df$Parameter)
+      priors$df[sel4, "Hyperparameter 1"] <- 0
+      priors$df[sel4, "Hyperparameter 2"] <- 10
+    })
+    
+    defaultWarn <- eventReactive(input$defaultPriors, {
+      "Warning: carefully consider the prior distribution for each parameter. The default settings from blavaan might not be suitable for the application at hand. Always conduct a prior sensitivity analysis, even when default priors are being used."
+    })
+    
+    output$defaultWarn <- renderText({
+      defaultWarn()
     })
     
     output$priorVals <- renderTable({ 
       priors$df
     })
+    
+    estWarn <- eventReactive(input$estMod, {
+      indNA <- complete.cases(priors$df)
+      if(all(indNA) == TRUE){
+        print("Estimating the model")
+      }
+      else({
+        print(c("Please specify the priors for the following parameters first:", paste(priors$df[!indNA, "Parameter"])))
+        })
+    })
+    
+    output$estWarn <- renderText({
+      estWarn()
+    })
+    
+    #TODO: estimate model if estMod button is clicked when all priors are set.
+    # Problem: how to automatically add the priors to the model? Need to add: x1 + prior("dnorm(1, 1)")*x2 etc.
 }
 
 shinyApp(ui = ui, server = server)
