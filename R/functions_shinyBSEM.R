@@ -59,5 +59,39 @@ init_df <- function(pars){
   }
 }
 
+## Function to set all priors to the blavaan default
+def_prior <- function(df){
+  load <- grep("l", df$pars)
+  df[load, "Hyperparameter 1"] <- 0
+  df[load, "Hyperparameter 2"] <- 10
+  
+  vars <- grep("v", df$pars)
+  df[vars, "Hyperparameter 1"] <- 1
+  df[vars, "Hyperparameter 2"] <- .5
+  
+  cors <- grep("r", df$pars)
+  df[cors, "Hyperparameter 1"] <- 1
+  df[cors, "Hyperparameter 2"] <- 1
+  
+  regs <- grep("b", df$pars)
+  df[regs, "Hyperparameter 1"] <- 0
+  df[regs, "Hyperparameter 2"] <- 10
+  
+  return(df)
+}
+
+## Function to add priors in correct form to the prior dataframe
+priorspec <- function(df){
+  if(df["Prior"] == "Normal"){
+    spec <- paste0("prior(\"dnorm(", df["Hyperparameter 1"], ", ", df["Hyperparameter 2"], ")\")* ")
+  }
+  if(df["Prior"] == "Gamma"){
+    spec <- paste0("prior(\"dgamma(", df["Hyperparameter 1"], ", ", df["Hyperparameter 2"], ")\")* ")
+  }
+  if(df["Prior"] == "Beta"){
+    spec <- paste0("prior(\"dbeta(", df["Hyperparameter 1"], ", ", df["Hyperparameter 2"], ")\")* ")
+  }
+  return(spec)
+}
 
 

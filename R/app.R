@@ -3,6 +3,7 @@
 
 library(shiny)
 library(lavaan)
+library(blavaan)
 library(tidySEM)
 library(plotly)
 
@@ -46,18 +47,33 @@ ui <- fluidPage(
                             y4 ~~ y8
                             y6 ~~ y8 ",
                           rows = 15),
+            
+            actionButton("estMod", "Estimate the model"),
         ),
             
         mainPanel(
             # path diagram
             plotlyOutput("mod.plot"),
             
+            # print warning if defaults are used
+            textOutput("defaultWarn"),
+            
+            # use blavaan default priors
+            actionButton("defaultPriors", 
+                         "Use the blavaan default priors"),
+            
+            # print warning if the "estimate" button is clicked but not all priors are specified
+            textOutput("estWarn"),
+            
+            # show output blavaan
+            textOutput("fitBlav"),
+            
             # plot of the specified prior
             uiOutput("priorOutput"),
             
             # chosen prior settings
             tableOutput("priorVals"),
-        
+
         )
     )
 )
@@ -72,14 +88,21 @@ server <- function(input, output) {
                  sep = input$sep)
     })
     
-    # add labels to the model and fit using lavaan
+    # add labels to the model
+    mod.lbl <- reactive({
+      req(input$model)
+      mod.lbl <- label_syntax_fun(toString(input$model))
+      return(mod.lbl)
+    })
+    
+    # fit the model using lavaan
+    
     fit <- reactive({
         req(input$model)
-        
-        mod.lbl <- label_syntax_fun(toString(input$model))
-        #mod.fit <- sem(mod.lbl, data = dat())
-        mod.fit <- sem(mod.lbl, data = PoliticalDemocracy) #TODO: use input data instead of placeholder
-        outFit <- list(modLbl = mod.lbl, modFit = mod.fit)
+  
+        #mod.fit <- sem(mod.lbl(), data = dat())
+        mod.fit <- sem(mod.lbl(), data = PoliticalDemocracy) #TODO: use input data instead of placeholder
+        outFit <- list(modLbl = mod.lbl(), modFit = mod.fit)
         return(outFit)
     })
     
@@ -229,10 +252,75 @@ server <- function(input, output) {
       priors$df[r, "Hyperparameter 2"] <- input$priorScaleInputRegr
     })
     
-    output$priorVals <- renderTable({ 
-        priors$df
+    # Set blavaan default priors if requested
+    addDefPrior <- observeEvent(input$defaultPriors, { 
+      # default priors loadings
+      sel1 <- grep("l", priors$df$Parameter)
+      priors$df[sel1, "Hyperparameter 1"] <- 0
+      priors$df[sel1, "Hyperparameter 2"] <- 10
+      # default priors variances
+      sel2 <- grep("v", priors$df$Parameter)
+      priors$df[sel2, "Hyperparameter 1"] <- 1
+      priors$df[sel2, "Hyperparameter 2"] <- 0.5
+      # default priors correlations
+      sel3 <- grep("r", priors$df$Parameter)
+      priors$df[sel3, "Hyperparameter 1"] <- 1
+      priors$df[sel3, "Hyperparameter 2"] <- 1
+      # default priors structural regression coefficients
+      sel4 <- grep("b", priors$df$Parameter)
+      priors$df[sel4, "Hyperparameter 1"] <- 0
+      priors$df[sel4, "Hyperparameter 2"] <- 10
     })
     
+    defaultWarn <- eventReactive(input$defaultPriors, {
+      "Warning: carefully consider the prior distribution for each parameter. The default settings from blavaan might not be suitable for the application at hand. Always conduct a prior sensitivity analysis, even when default priors are being used."
+    })
+    
+    output$defaultWarn <- renderText({
+      defaultWarn()
+    })
+    
+    output$priorVals <- renderTable({ 
+      priors$df[, 1:4] # do not show the prior specification
+    })
+    
+    # show warning if estimate button is clicked before all priors are specified
+    estWarn <- reactiveValues()
+    
+    observe({
+      indNA <- complete.cases(priors$df)
+      if(all(indNA) == TRUE){ 
+        estWarn$mess <- "All priors are specified"
+      }
+      else({
+        estWarn$mess <- c("Please specify the priors for the following parameters first:", paste(priors$df[!indNA, "Parameter"]))
+      })
+    })
+    
+    output$estWarn <- renderText({
+      estWarn$mess
+    })
+    
+    # estimate the model 
+    fitBlav <- eventReactive(input$estMod, {
+      indNA <- complete.cases(priors$df)
+      if(all(indNA) == TRUE){ # if all priors are specified: start model estimation
+        priors$df$priorspec <- apply(priors$df, 1, priorspec) # add priors in correct form for blavaan to priors$df
+        df.full <- merge(mod.lbl(), priors$df, by.x = "label", by.y = "Parameter") # combine prior specification with model labels
+        # create model syntax with priors
+        df.full$modspec <- paste(df.full$lhs, df.full$op, df.full$rhs, sep = " ")
+        df.full$spec <- paste(df.full$priorspec, df.full$modspec, sep ="")
+        modprior <- paste(df.full$spec, collapse = " \n ")
+        #fit.blav <- bsem(modprior, data = dat())
+        fit.blav <- bsem(modprior, data = PoliticalDemocracy) #TODO: use input data instead of placeholder
+      }
+    })
+    
+    output$fitBlav <- renderText({
+      req(fitBlav())
+      summary(fitBlav())
+    })
+
 }
 
 shinyApp(ui = ui, server = server)
