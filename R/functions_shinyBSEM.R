@@ -80,7 +80,18 @@ def_prior <- function(df){
   return(df)
 }
 
-
-
+## Function to add priors in correct form to the prior dataframe
+priorspec <- function(df){
+  if(df["Prior"] == "Normal"){
+    spec <- paste0("prior(\"dnorm(", df["Hyperparameter 1"], ", ", df["Hyperparameter 2"], ")\")* ")
+  }
+  if(df["Prior"] == "Gamma"){
+    spec <- paste0("prior(\"dgamma(", df["Hyperparameter 1"], ", ", df["Hyperparameter 2"], ")\")* ")
+  }
+  if(df["Prior"] == "Beta"){
+    spec <- paste0("prior(\"dbeta(", df["Hyperparameter 1"], ", ", df["Hyperparameter 2"], ")\")* ")
+  }
+  return(spec)
+}
 
 

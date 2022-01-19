@@ -3,6 +3,7 @@
 
 library(shiny)
 library(lavaan)
+library(blavaan)
 library(tidySEM)
 library(plotly)
 
@@ -64,6 +65,9 @@ ui <- fluidPage(
             # print warning if the "estimate" button is clicked but not all priors are specified
             textOutput("estWarn"),
             
+            # show output blavaan
+            textOutput("fitBlav"),
+            
             # plot of the specified prior
             uiOutput("priorOutput"),
             
@@ -84,14 +88,21 @@ server <- function(input, output) {
                  sep = input$sep)
     })
     
-    # add labels to the model and fit using lavaan
+    # add labels to the model
+    mod.lbl <- reactive({
+      req(input$model)
+      mod.lbl <- label_syntax_fun(toString(input$model))
+      return(mod.lbl)
+    })
+    
+    # fit the model using lavaan
+    
     fit <- reactive({
         req(input$model)
-        
-        mod.lbl <- label_syntax_fun(toString(input$model))
-        #mod.fit <- sem(mod.lbl, data = dat())
-        mod.fit <- sem(mod.lbl, data = PoliticalDemocracy) #TODO: use input data instead of placeholder
-        outFit <- list(modLbl = mod.lbl, modFit = mod.fit)
+  
+        #mod.fit <- sem(mod.lbl(), data = dat())
+        mod.fit <- sem(mod.lbl(), data = PoliticalDemocracy) #TODO: use input data instead of placeholder
+        outFit <- list(modLbl = mod.lbl(), modFit = mod.fit)
         return(outFit)
     })
     
@@ -270,25 +281,46 @@ server <- function(input, output) {
     })
     
     output$priorVals <- renderTable({ 
-      priors$df
+      priors$df[, 1:4] # do not show the prior specification
     })
     
-    estWarn <- eventReactive(input$estMod, {
+    # show warning if estimate button is clicked before all priors are specified
+    estWarn <- reactiveValues()
+    
+    observe({
       indNA <- complete.cases(priors$df)
-      if(all(indNA) == TRUE){
-        print("Estimating the model")
+      if(all(indNA) == TRUE){ 
+        estWarn$mess <- "All priors are specified"
       }
       else({
-        print(c("Please specify the priors for the following parameters first:", paste(priors$df[!indNA, "Parameter"])))
-        })
+        estWarn$mess <- c("Please specify the priors for the following parameters first:", paste(priors$df[!indNA, "Parameter"]))
+      })
     })
     
     output$estWarn <- renderText({
-      estWarn()
+      estWarn$mess
     })
     
-    #TODO: estimate model if estMod button is clicked when all priors are set.
-    # Problem: how to automatically add the priors to the model? Need to add: x1 + prior("dnorm(1, 1)")*x2 etc.
+    # estimate the model 
+    fitBlav <- eventReactive(input$estMod, {
+      indNA <- complete.cases(priors$df)
+      if(all(indNA) == TRUE){ # if all priors are specified: start model estimation
+        priors$df$priorspec <- apply(priors$df, 1, priorspec) # add priors in correct form for blavaan to priors$df
+        df.full <- merge(mod.lbl(), priors$df, by.x = "label", by.y = "Parameter") # combine prior specification with model labels
+        # create model syntax with priors
+        df.full$modspec <- paste(df.full$lhs, df.full$op, df.full$rhs, sep = " ")
+        df.full$spec <- paste(df.full$priorspec, df.full$modspec, sep ="")
+        modprior <- paste(df.full$spec, collapse = " \n ")
+        #fit.blav <- bsem(modprior, data = dat())
+        fit.blav <- bsem(modprior, data = PoliticalDemocracy) #TODO: use input data instead of placeholder
+      }
+    })
+    
+    output$fitBlav <- renderText({
+      req(fitBlav())
+      summary(fitBlav())
+    })
+
 }
 
 shinyApp(ui = ui, server = server)
