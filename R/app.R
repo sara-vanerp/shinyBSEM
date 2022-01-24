@@ -48,31 +48,52 @@ ui <- fluidPage(
                             y6 ~~ y8 ",
                           rows = 15),
             
+            numericInput("iter", 
+                         "Specify the number of iterations to take after burnin",
+                         value = 1000), 
+            
+            numericInput("chains", 
+                         "Specify the number of desired MCMC chains",
+                         4),
+            
             actionButton("estMod", "Estimate the model"),
+            
+            uiOutput("download")
         ),
             
         mainPanel(
-            # path diagram
-            plotlyOutput("mod.plot"),
+          
+          tabsetPanel(type = "tabs",
+                      tabPanel("Priors", 
+                        
+                        # path diagram
+                        plotlyOutput("mod.plot"),
+                        
+                        # print warning if defaults are used
+                        textOutput("defaultWarn"),
+                        
+                        # use blavaan default priors
+                        actionButton("defaultPriors", 
+                                     "Use the blavaan default priors"),
+                        
+                        # print warning if the "estimate" button is clicked but not all priors are specified
+                        textOutput("estWarn"),
+                        
+                        # show message when done
+                        textOutput("fitCompl"),
+                        
+                        # plot of the specified prior
+                        uiOutput("priorOutput"),
+                        
+                        # chosen prior settings
+                        tableOutput("priorVals")
+                        
+                      ),
+                      
+                      tabPanel("Output"),
+                      tabPanel("Prior sensitivity checks")
+          )
             
-            # print warning if defaults are used
-            textOutput("defaultWarn"),
-            
-            # use blavaan default priors
-            actionButton("defaultPriors", 
-                         "Use the blavaan default priors"),
-            
-            # print warning if the "estimate" button is clicked but not all priors are specified
-            textOutput("estWarn"),
-            
-            # show output blavaan
-            textOutput("fitBlav"),
-            
-            # plot of the specified prior
-            uiOutput("priorOutput"),
-            
-            # chosen prior settings
-            tableOutput("priorVals"),
 
         )
     )
@@ -311,15 +332,31 @@ server <- function(input, output) {
         df.full$modspec <- paste(df.full$lhs, df.full$op, df.full$rhs, sep = " ")
         df.full$spec <- paste(df.full$priorspec, df.full$modspec, sep ="")
         modprior <- paste(df.full$spec, collapse = " \n ")
-        #fit.blav <- bsem(modprior, data = dat())
-        fit.blav <- bsem(modprior, data = PoliticalDemocracy) #TODO: use input data instead of placeholder
+        #fit.blav <- bsem(modprior, data = dat(), n.chains = input$chains, sample = input$iter)
+        fit.blav <- bsem(modprior, data = PoliticalDemocracy,
+                        n.chains = input$chains, sample = input$iter) #TODO: use input data instead of placeholder
       }
     })
     
-    output$fitBlav <- renderText({
-      req(fitBlav())
-      summary(fitBlav())
+    output$fitCompl <- renderText({
+      req(input$estMod)
+      if(!is.null(fitBlav())){
+        "Estimation is complete. Either download the Stan fitobject (for example for post-processing with shinystan) or continue to the tab 'output' tab"
+      }
     })
+    
+    output$download <- renderUI({
+      req(fitBlav())
+      downloadButton("downloadFit", "Download the Stan fitobject")
+    })
+      
+    output$downloadFit <- downloadHandler(
+      filename = "stanfit_bsem.RData",
+      content = function(file) {
+        saveRDS(fitBlav(), file)
+      }
+    )
+    
 
 }
 
