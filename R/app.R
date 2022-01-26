@@ -7,6 +7,6 @@ library(blavaan)
 library(tidySEM)
 library(plotly)
 
-source("./functions_shinyBSEM.R")
+source("./R/functions_shinyBSEM.R")
 
 runApp("./R")
