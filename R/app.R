@@ -11,7 +11,7 @@ source("./functions_shinyBSEM.R")
 
 ui <- fluidPage(
 
-    titlePanel("Bayesian SEM"),
+  titlePanel(HTML(paste(h1("Bayesian SEM"), h5("Developed by:", a("Sara van Erp", href = "https://saravanerp.com") )))),
     
     sidebarLayout(
         sidebarPanel(
