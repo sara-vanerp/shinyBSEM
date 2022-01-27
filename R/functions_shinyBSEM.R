@@ -94,4 +94,16 @@ priorspec <- function(df){
   return(spec)
 }
 
+## Function to combine convergence diagnostics
+convfun <- function(fit, lbls){
+  rhat <- blavInspect(fit, what = "psrf")
+  neff <- blavInspect(fit, what = "neff")
+  convdf <- cbind.data.frame(rhat, neff)
+  convdf$par <- rownames(convdf)
+  # add original labels
+  lbls$par <- paste(lbls$lhs, lbls$op, lbls$rhs)
+  lbls.sel <- lbls[, c("par", "label")]
+  merge(lbls.sel, convdf, by = "par")
+}
+
 
