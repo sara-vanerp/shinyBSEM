@@ -233,16 +233,16 @@ server <- function(input, output) {
       df.full$modspec <- paste(df.full$lhs, df.full$op, df.full$rhs, sep = " ")
       df.full$spec <- paste(df.full$priorspec, df.full$modspec, sep ="")
       modprior <- paste(df.full$spec, collapse = " \n ")
-      #fit.blav <- bsem(modprior, data = dat(), n.chains = input$chains, sample = input$iter)
+      #fit.blav <- bsem(modprior, data = dat(), n.chains = input$chains, burnin = input$burnin, sample = input$iter)
       fit.blav <- bsem(modprior, data = PoliticalDemocracy,
-                       n.chains = input$chains, sample = input$iter) #TODO: use input data instead of placeholder
+                       n.chains = input$chains,  burnin = input$burnin, sample = input$iter) #TODO: use input data instead of placeholder
     }
   })
   
   output$fitCompl <- renderText({
     req(input$estMod)
     if(!is.null(fitBlav())){
-      "Estimation is complete. Either download the Stan fitobject (for example for post-processing with shinystan) or continue to the tab 'output' tab"
+      "Estimation is complete. Either download the blavaan fitobject or continue to the tab 'output' tab"
     }
   })
   
