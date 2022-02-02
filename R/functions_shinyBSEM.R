@@ -95,7 +95,8 @@ priorspec <- function(df){
 }
 
 ## Function to combine convergence diagnostics
-convfun <- function(fit, lbls, totalN){
+# Use specific cutoffs for convergence; these are hardcoded only here
+convfun <- function(fit, lbls, totalN, rhatC = 1.1, neffC = 100, neff_ratioC = 0.1){
   rhat <- blavInspect(fit, what = "psrf")
   neff <- blavInspect(fit, what = "neff")
   neff_ratio <- neff/totalN
@@ -107,7 +108,9 @@ convfun <- function(fit, lbls, totalN){
   lbls$`Parameter` <- paste(lbls$lhs, lbls$op, lbls$rhs, sep = "")
   lbls.sel <- lbls[, c("Parameter", "label")]
   colnames(lbls.sel) <- c("Parameter", "Label")
-  merge(lbls.sel, convdf, by = "Parameter")
+  df <- merge(lbls.sel, convdf, by = "Parameter")
+  out <- list(df = df, rhatC = rhatC, neffC = neffC, neff_ratioC = neff_ratioC)
+  return(out)
 }
 
 
