@@ -202,7 +202,7 @@ server <- function(input, output) {
     defaultWarn()
   })
   
-  output$priorVals <- renderTable({ 
+  output$priorVals <- renderDataTable({ 
     priors$df[, 1:4] # do not show the prior specification
   })
   
@@ -258,7 +258,7 @@ server <- function(input, output) {
     }
   )
   
-  output$fitSummary <- renderTable({
+  output$fitSummary <- renderDataTable({
     req(fitBlav())
     summary(fitBlav())
   })

@@ -63,7 +63,7 @@ y6 ~~ y8 ",
                               # plot of the specified prior
                               uiOutput("priorOutput"),
                               # chosen prior settings
-                              tableOutput("priorVals")
+                              dataTableOutput("priorVals")
                             )
                           )
                           ),
@@ -71,7 +71,7 @@ y6 ~~ y8 ",
                             tabPanel("Convergence",
                                      dataTableOutput("convInfo")),
                             tabPanel("Summary",
-                                     tableOutput("fitSummary")),
+                                     dataTableOutput("fitSummary")),
                             tabPanel("Visualisation")),
                  tabPanel("Prior sensitivity checks"),
                  navbarMenu("More",
