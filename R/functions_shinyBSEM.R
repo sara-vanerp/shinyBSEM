@@ -95,15 +95,19 @@ priorspec <- function(df){
 }
 
 ## Function to combine convergence diagnostics
-convfun <- function(fit, lbls){
+convfun <- function(fit, lbls, totalN){
   rhat <- blavInspect(fit, what = "psrf")
   neff <- blavInspect(fit, what = "neff")
-  convdf <- cbind.data.frame(rhat, neff)
-  convdf$par <- rownames(convdf)
+  neff_ratio <- neff/totalN
+  convdf <- cbind.data.frame("Potential scale reduction statistic (Rhat)" = rhat, 
+                             "Effective N"= neff, 
+                             "Ratio effective to total N" = neff_ratio)
+  convdf$`Parameter` <- rownames(convdf)
   # add original labels
-  lbls$par <- paste(lbls$lhs, lbls$op, lbls$rhs, sep = "")
-  lbls.sel <- lbls[, c("par", "label")]
-  merge(lbls.sel, convdf, by = "par")
+  lbls$`Parameter` <- paste(lbls$lhs, lbls$op, lbls$rhs, sep = "")
+  lbls.sel <- lbls[, c("Parameter", "label")]
+  colnames(lbls.sel) <- c("Parameter", "Label")
+  merge(lbls.sel, convdf, by = "Parameter")
 }
 
 

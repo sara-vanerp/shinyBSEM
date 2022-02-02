@@ -263,9 +263,15 @@ server <- function(input, output) {
     summary(fitBlav())
   })
   
-  output$convInfo <- renderTable({
+  output$convInfo <- renderDataTable({
     req(fitBlav())
-    convfun(fitBlav(), lbls = mod.lbl())
+    df <- convfun(fitBlav(), lbls = mod.lbl(), totalN = input$iter*input$chains)
+    return(datatable(df) %>%
+             formatStyle("Potential scale reduction statistic (Rhat)", Color = styleInterval(1.1, c("black", "red"))) %>%
+             formatRound("Potential scale reduction statistic (Rhat)", digits = 2) %>%
+             formatRound("Effective N", digits = 1) %>%
+             formatRound("Ratio effective to total N", digits = 1) %>%
+             formatStyle("Ratio effective to total N", Color = styleInterval(0.1, c("red", "black"))))
   })
   
 }

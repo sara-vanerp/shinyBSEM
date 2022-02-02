@@ -6,6 +6,7 @@ library(lavaan)
 library(blavaan)
 library(tidySEM)
 library(plotly)
+library(DT)
 
 source("./R/functions_shinyBSEM.R")
 
