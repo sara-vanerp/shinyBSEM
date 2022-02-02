@@ -101,7 +101,7 @@ convfun <- function(fit, lbls){
   convdf <- cbind.data.frame(rhat, neff)
   convdf$par <- rownames(convdf)
   # add original labels
-  lbls$par <- paste(lbls$lhs, lbls$op, lbls$rhs)
+  lbls$par <- paste(lbls$lhs, lbls$op, lbls$rhs, sep = "")
   lbls.sel <- lbls[, c("par", "label")]
   merge(lbls.sel, convdf, by = "par")
 }

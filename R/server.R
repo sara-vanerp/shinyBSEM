@@ -263,5 +263,9 @@ server <- function(input, output) {
     summary(fitBlav())
   })
   
+  output$convInfo <- renderTable({
+    req(fitBlav())
+    convfun(fitBlav(), lbls = mod.lbl())
+  })
   
 }
