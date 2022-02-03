@@ -263,16 +263,43 @@ server <- function(input, output) {
     summary(fitBlav())
   })
   
-  output$convInfo <- renderDataTable({
+  convOut <- reactive({
     req(fitBlav())
-    convOut <- convfun(fitBlav(), lbls = mod.lbl(), totalN = input$iter*input$chains)
-    return(datatable(convOut$df) %>%
+    convfun(fitBlav(), lbls = mod.lbl(), totalN = input$iter*input$chains)
+  })
+  
+  output$convInfo <- renderDataTable({
+    return(datatable(convOut()$df) %>%
              formatRound("Potential scale reduction statistic (Rhat)", digits = 2) %>%
-             formatStyle("Potential scale reduction statistic (Rhat)", Color = styleInterval(convOut$rhatC, c("black", "red"))) %>%
+             formatStyle("Potential scale reduction statistic (Rhat)", Color = styleInterval(convOut()$rhatC, c("black", "red"))) %>%
              formatRound("Effective N", digits = 1) %>%
-             formatStyle("Effective N", Color = styleInterval(convOut$neffC, c("red", "black"))) %>%
+             formatStyle("Effective N", Color = styleInterval(convOut()$neffC, c("red", "black"))) %>%
              formatRound("Ratio effective to total N", digits = 1) %>%
-             formatStyle("Ratio effective to total N", Color = styleInterval(convOut$neff_ratioC, c("red", "black"))))
+             formatStyle("Ratio effective to total N", Color = styleInterval(convOut()$neff_ratioC, c("red", "black")))
+           )
+  })
+  
+  convWarning <- reactive({
+    req(convOut())
+    if(convOut()$conv == "yes"){
+      "The model has converged according to the following criteria: all parameters have: 
+      1) a value for the potential scale reduction statistic (Rhat) smaller than or equal to 1.1;
+      2) an effective number of iterations of at least 100; and
+      3) a ratio of effective number of iterations to the total number of iterations of at least 0.1.
+      Please note that these criteria are based on heuristics and this is therefore no guarantee that the model has indeed converged.
+      To further assess convergence, it is possible to download the blavaan fitobject and further process it in R. 
+      Please see the references for more resources on how to assess convergence."
+    } else{
+      "The model has not converged. At least one parameter shows one or more of the following:
+      1) a value for the potential scale reduction statistic (Rhat) greater than 1.1;
+      2) an effective number of iterations less than 100; 
+      3) a ratio of effective number of iterations to the total number of iterations smaller than 0.1.
+      Please increase the number of iterations or reconsider your model. The current results should not be trusted."
+    }
+  })
+  
+  output$convWarn <- renderText({
+    convWarning()
   })
   
 }
