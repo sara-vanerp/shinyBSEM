@@ -325,7 +325,7 @@ server <- function(input, output) {
     }
   })
   
-  output$convWarn <- renderText({
+  output$convWarn1 <- output$convWarn2 <- renderText({
     convWarning()
   })
   
