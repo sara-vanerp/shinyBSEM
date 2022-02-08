@@ -30,7 +30,7 @@ server <- function(input, output) {
   
   # plot the model
   output$mod.plot <- renderPlotly({
-    ggplotly(plot_fun(fit()$modFit), tooltip = "text")
+    ggplotly(plot_fun(fit()$modFit, est = FALSE), tooltip = "text")
   })
   
   click_data <- reactive({
@@ -333,5 +333,27 @@ server <- function(input, output) {
     req(fitBlav())
     paste0("The posterior predictive p-value equals ", fitBlav()@test[[2]]$stat, ". Values close to 0.5 indicate a model that fits the observed data.")
   })
+  
+  
+  # Visualization estimated model
+  # first add posterior mean estimates to lavaan fitobject
+  fitLavEst <- reactive({
+    req(fit(), fitBlav())
+    fitLav <- fit()$modFit
+    ptl <- fitLav@ParTable
+    ptb <- fitBlav()@ParTable
+    # check if ParTables have the same order of parameters
+    if(sum(ptl$lhs != ptb$lhs) + sum(ptl$op != ptb$op) + sum(ptl$rhs != ptb$rhs) == 0){
+      fitLav@ParTable$est <- ptb$est
+    } # TODO: show warning if condition is not met
+    return(fitLav)
+  })
+  
+  # plot the model with estimates
+  output$mod.plot.est <- renderPlotly({
+    ggplotly(plot_fun(fitLavEst(), est = TRUE), tooltip = "text")
+  })
+  
+
   
 }

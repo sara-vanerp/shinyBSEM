@@ -33,7 +33,7 @@ label_syntax_fun <- function(model){
 }
 
 ## Function to plot the model using tidySEM
-plot_fun <- function(fit, layout = "layout_as_tree"){
+plot_fun <- function(fit, layout = "layout_as_tree", est = TRUE){
   prep <- prepare_graph(fit, layout_algorithm = layout)
   
   prep$edges$geom_text <- TRUE # to be able to record and use the labels
@@ -41,7 +41,7 @@ plot_fun <- function(fit, layout = "layout_as_tree"){
   
   # show the labels instead of the classical estimates
   # TODO: avoid estimating the classical model at all
-  prep$edges$label <- prep$edges$lavaan_label
+  if(est == FALSE){prep$edges$label <- prep$edges$lavaan_label}
   pmod <- plot(prep)
   return(pmod)
 }
@@ -114,5 +114,6 @@ convfun <- function(fit, lbls, totalN, rhatC = 1.1, neffC = 100, neff_ratioC = 0
   } else{ "yes" }
   return(list(df = df, rhatC = rhatC, neffC = neffC, neff_ratioC = neff_ratioC, conv = conv))
 }
+
 
 
