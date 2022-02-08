@@ -329,4 +329,9 @@ server <- function(input, output) {
     convWarning()
   })
   
+  output$ppp <- renderText({
+    req(fitBlav())
+    paste0("The posterior predictive p-value equals ", fitBlav()@test[[2]]$stat, ". Values close to 0.5 indicate a model that fits the observed data.")
+  })
+  
 }
