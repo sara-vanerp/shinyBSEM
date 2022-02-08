@@ -258,11 +258,38 @@ server <- function(input, output) {
     }
   )
   
-  output$fitSummary <- renderDataTable({
+  summ <- reactiveValues()
+  
+  observe({
     req(fitBlav())
-    summary(fitBlav())
+    pt <- parTable(fitBlav())[, c("lhs", "op", "rhs", "se", "prior")]
+    pt$Parameter <- paste0(pt$lhs, pt$op, pt$rhs)
+    out1 <- as.data.frame(pt[, -c(1:3)])
+    colnames(out1) <- c("Posterior SD", "Prior", "Parameter")
+    
+    means <- blavInspect(fitBlav(), what = "postmean")
+    medians <- blavInspect(fitBlav(), what = "postmedian")
+    hpd <- blavInspect(fitBlav(), what = "hpd", level = 0.95) # does not correspond with pi from summary?
+    out2 <- cbind.data.frame(means, medians, hpd)
+    out2$Parameter <- rownames(out2)
+    colnames(out2) <- c("Posterior mean", "Posterior median", 
+                        "Lower bound 95% CI", "Upper bound 95% CI", "Parameter")
+    
+    dt <- merge(out1, out2, by = "Parameter")
+    summ$dt <- dt[, c("Parameter", "Posterior mean", "Posterior median", "Posterior SD",
+                      "Lower bound 95% CI", "Upper bound 95% CI", "Prior")]
   })
   
+  output$fitSummary <- renderDataTable({
+    return(datatable(summ$dt) %>%
+             formatRound("Posterior mean", digits = 2) %>%
+             formatRound("Posterior median", digits = 2) %>%
+             formatRound("Posterior SD", digits = 2) %>%
+             formatRound("Lower bound 95% CI", digits = 2) %>%
+             formatRound("Upper bound 95% CI", digits = 2)
+    )
+  })
+
   convOut <- reactive({
     req(fitBlav())
     convfun(fitBlav(), lbls = mod.lbl(), totalN = input$iter*input$chains)
