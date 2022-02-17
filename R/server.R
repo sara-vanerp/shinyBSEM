@@ -13,7 +13,7 @@ server <- function(input, output) {
   # add labels to the model
   mod.lbl <- reactive({
     req(input$model)
-    mod.lbl <- label_syntax_fun(toString(input$model))
+    mod.lbl <- label_syntax_fun(toString(input$model), meanstructure = FALSE)
     return(mod.lbl)
   })
   
@@ -338,22 +338,25 @@ server <- function(input, output) {
   # Visualization estimated model
   # first add posterior mean estimates to lavaan fitobject
   fitLavEst <- reactive({
-    req(fit(), fitBlav())
-    fitLav <- fit()$modFit
+    req(input$model, fitBlav())
+    # this is inefficient, because the lavaan model is estimated twice now, but the app breaks when meanstructure = T is added to the previous instance
+    mod.lbl.means <- label_syntax_fun(toString(input$model), meanstructure = TRUE)
+    #fitLav <- sem(mod.lbl.means, data = dat(), meanstructure = TRUE)
+    fitLav <- sem(mod.lbl.means, data = PoliticalDemocracy, meanstructure = TRUE)
     ptl <- fitLav@ParTable
     ptb <- fitBlav()@ParTable
-    # check if ParTables have the same order of parameters
-    if(sum(ptl$lhs != ptb$lhs) + sum(ptl$op != ptb$op) + sum(ptl$rhs != ptb$rhs) == 0){
-      fitLav@ParTable$est <- ptb$est
-    } # TODO: show warning if condition is not met
+    ptl$est <- ptb$est
+    
+    # remove intercepts from ptl to avoid them being plotted
+    sel <- which(ptl$op == "~1")
+    fitLav@ParTable <- lapply(ptl, function(x) x[-sel])
+    
     return(fitLav)
   })
-  
+
   # plot the model with estimates
   output$mod.plot.est <- renderPlotly({
     ggplotly(plot_fun(fitLavEst(), est = TRUE), tooltip = "text")
   })
-  
-
-  
+ 
 }

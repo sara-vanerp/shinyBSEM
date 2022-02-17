@@ -2,8 +2,8 @@
 ## Author: Sara van Erp
 
 ## Function to automatically add intuitive labels to the lavaan syntax
-label_syntax_fun <- function(model){
-  parTab <- lavaanify(model, meanstructure = FALSE, int.ov.free = TRUE, int.lv.free = FALSE,
+label_syntax_fun <- function(model, meanstructure = FALSE){
+  parTab <- lavaanify(model, meanstructure = meanstructure, int.ov.free = TRUE, int.lv.free = FALSE,
                       auto.fix.first = TRUE, auto.fix.single = TRUE, auto.var = TRUE,
                       auto.cov.lv.x = TRUE, auto.efa = TRUE, auto.th = TRUE,
                       auto.delta = TRUE, auto.cov.y = TRUE)
@@ -28,7 +28,17 @@ label_syntax_fun <- function(model){
     regr[, "label"] <- paste0("b", 1:nrow(regr))
   }
   
-  parTabLab <- rbind.data.frame(load, vars, corr, regr)
+  if(meanstructure == TRUE){
+    int <- parTab[parTab$op == "~1", ]
+    if(nrow(int) > 0){
+      int[, "label"] <- paste0("i", 1:nrow(int))
+    }
+    
+    parTabLab <- rbind.data.frame(load, vars, corr, regr, int)
+  } else{
+    parTabLab <- rbind.data.frame(load, vars, corr, regr)
+  }
+  
   return(parTabLab)
 }
 
