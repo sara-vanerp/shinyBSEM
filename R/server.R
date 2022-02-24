@@ -340,16 +340,28 @@ server <- function(input, output) {
   fitLavEst <- reactive({
     req(input$model, fitBlav())
     # this is inefficient, because the lavaan model is estimated twice now, but the app breaks when meanstructure = T is added to the previous instance
-    mod.lbl.means <- label_syntax_fun(toString(input$model), meanstructure = TRUE)
-    #fitLav <- sem(mod.lbl.means, data = dat(), meanstructure = TRUE)
-    fitLav <- sem(mod.lbl.means, data = PoliticalDemocracy, meanstructure = TRUE)
-    ptl <- fitLav@ParTable
+    mod.lbl <- label_syntax_fun(input$model, meanstructure = TRUE)
+    #fitLav <- sem(mod.lbl, data = dat(), meanstructure = TRUE)
+    fitLav <- sem(mod.lbl, data = PoliticalDemocracy, meanstructure = TRUE)
     ptb <- fitBlav()@ParTable
-    ptl$est <- ptb$est
     
-    # remove intercepts from ptl to avoid them being plotted
-    sel <- which(ptl$op == "~1")
-    fitLav@ParTable <- lapply(ptl, function(x) x[-sel])
+    # remove intercepts from fitLav@ParTable to avoid them being plotted
+    sel <- which(fitLav@ParTable$op == "~1")
+    fitLav@ParTable <- lapply(fitLav@ParTable, function(x) x[-sel])
+    
+    # make sure ptb and fitLav@ParTable are ordered similarly before adding Bayesian estimates to lavaan ParTable
+    n <- length(ptb$id)
+    if(sum(ptb$lhs == fitLav@ParTable$lhs) == n &
+       sum(ptb$op == fitLav@ParTable$op) == n &
+       sum(ptb$rhs == fitLav@ParTable$rhs) == n){
+      fitLav@ParTable$est <- ptb$est
+    } else{
+      ord <- paste0(fitLav@ParTable$lhs, fitLav@ParTable$op, fitLav@ParTable$rhs)
+      ptb.df <- data.frame("id" = ptb$id, 
+                           "par" = paste0(ptb$lhs, ptb$op, ptb$rhs))
+      ids <- ptb.df[match(ord, ptb.df$par), "id"]
+      fitLav@ParTable$est <- ptb$est[ids]
+    }
     
     return(fitLav)
   })
@@ -357,6 +369,10 @@ server <- function(input, output) {
   # plot the model with estimates
   output$mod.plot.est <- renderPlotly({
     ggplotly(plot_fun(fitLavEst(), est = TRUE), tooltip = "text")
+  })
+  
+  output$plot.est <- renderDataTable({
+    summary(fitBlav())$summary
   })
  
 }
