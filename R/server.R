@@ -370,9 +370,5 @@ server <- function(input, output) {
   output$mod.plot.est <- renderPlotly({
     ggplotly(plot_fun(fitLavEst(), est = TRUE), tooltip = "text")
   })
-  
-  output$plot.est <- renderDataTable({
-    summary(fitBlav())$summary
-  })
  
 }

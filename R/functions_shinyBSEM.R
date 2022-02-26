@@ -49,9 +49,17 @@ plot_fun <- function(fit, layout = "layout_as_tree", est = TRUE){
   prep$edges$geom_text <- TRUE # to be able to record and use the labels
   prep$nodes$geom_text <- TRUE # to be able to record and use the labels
   
-  # show the labels instead of the classical estimates
+  # show the labels instead of the classical estimates if est == FALSE
   # TODO: avoid estimating the classical model at all
   if(est == FALSE){prep$edges$label <- prep$edges$lavaan_label}
+  # show the Bayesian estimates without significance if est == TRUE
+  if(est == TRUE){
+    lb <- prep$edges$label
+    lb1 <- gsub("***", "", lb, fixed = TRUE)
+    lb2 <- gsub("**", "", lb1, fixed = TRUE)
+    lb3 <- gsub("*", "", lb2, fixed = TRUE)
+    prep$edges$label <- lb3
+  }
   pmod <- plot(prep)
   return(pmod)
 }
