@@ -51,19 +51,19 @@ y6 ~~ y8 ",
                             mainPanel(
                               # path diagram
                               plotlyOutput("mod.plot"),
+                              # plot of the specified prior
+                              uiOutput("priorOutput"),
                               # print warning if defaults are used
                               textOutput("defaultWarn"),
-                              # use blavaan default priors
-                              actionButton("defaultPriors", 
-                                           "Use the blavaan default priors"),
                               # print warning if the "estimate" button is clicked but not all priors are specified
                               textOutput("estWarn"),
                               # show message when done
                               textOutput("fitCompl"),
-                              # plot of the specified prior
-                              uiOutput("priorOutput"),
                               # chosen prior settings
-                              dataTableOutput("priorVals")
+                              dataTableOutput("priorVals"),
+                              # use blavaan default priors
+                              actionButton("defaultPriors", 
+                                           "Use the blavaan default priors"),
                             )
                           )
                           ),

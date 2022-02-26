@@ -68,15 +68,12 @@ server <- function(input, output) {
                   text = element_text(size = 20))
         }),
         
-        # TODO: clean this up; now the normal distribution is used in 3 places and evaluated separately each tim
-        # TODO: add max decimal places to limits
-        # TODO: once working and fixed, extend to other prior types
         renderText({
-          paste0("With this prior approximately 95% prior probability is assigned in the range ", 
-                 quantile(rnorm(100000, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 
-                          probs = c(.025, .975)[1]), " - ",
-                 quantile(rnorm(100000, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 
-                          probs = c(.025, .975)[2]))
+          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
+                 round(quantile(rnorm(100000, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 
+                          probs = c(.025, .975)[1]), 2), " ; ",
+                 round(quantile(rnorm(100000, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 
+                          probs = c(.025, .975)[2]), 2), "]")
         })
       )
     } else if(grepl("v", click_data()) == TRUE){ # variances
@@ -98,6 +95,14 @@ server <- function(input, output) {
             theme(panel.border = element_blank(), panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
                   text = element_text(size = 20))
+        }),
+        # TODO: check if this below works. If so, extend to other parameters as well
+        renderText({
+          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
+                 round(quantile(rgamma(100000, shape = input$priorShapeInputVar, rate = input$priorRateInputVar), 
+                                probs = c(.025, .975)[1]), 2), " ; ",
+                 round(quantile(rgamma(100000, shape = input$priorShapeInputVar, rate = input$priorRateInputVar), 
+                                probs = c(.025, .975)[2]), 2), "]")
         })
       )
     } else if(grepl("r", click_data()) == TRUE){ # correlations
@@ -207,20 +212,18 @@ server <- function(input, output) {
   })
   
   # show warning if estimate button is clicked before all priors are specified
-  estWarn <- reactiveValues()
-  
-  observe({
+  estWarn <- eventReactive(input$estMod, {
     indNA <- complete.cases(priors$df)
     if(all(indNA) == TRUE){ 
-      estWarn$mess <- "All priors are specified"
+      "All priors are specified"
     }
     else({
-      estWarn$mess <- c("Please specify the priors for the following parameters first:", paste(priors$df[!indNA, "Parameter"]))
+      c("Please specify the priors for the following parameters first:", paste(priors$df[!indNA, "Parameter"]))
     })
   })
-  
+
   output$estWarn <- renderText({
-    estWarn$mess
+    estWarn()
   })
   
   # estimate the model 
