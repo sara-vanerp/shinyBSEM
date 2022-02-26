@@ -2,8 +2,8 @@
 ## Author: Sara van Erp
 
 ## Function to automatically add intuitive labels to the lavaan syntax
-label_syntax_fun <- function(model){
-  parTab <- lavaanify(model, meanstructure = FALSE, int.ov.free = TRUE, int.lv.free = FALSE,
+label_syntax_fun <- function(model, meanstructure = FALSE){
+  parTab <- lavaanify(model, meanstructure = meanstructure, int.ov.free = TRUE, int.lv.free = FALSE,
                       auto.fix.first = TRUE, auto.fix.single = TRUE, auto.var = TRUE,
                       auto.cov.lv.x = TRUE, auto.efa = TRUE, auto.th = TRUE,
                       auto.delta = TRUE, auto.cov.y = TRUE)
@@ -28,20 +28,38 @@ label_syntax_fun <- function(model){
     regr[, "label"] <- paste0("b", 1:nrow(regr))
   }
   
-  parTabLab <- rbind.data.frame(load, vars, corr, regr)
+  if(meanstructure == TRUE){
+    int <- parTab[parTab$op == "~1", ]
+    if(nrow(int) > 0){
+      int[, "label"] <- paste0("i", 1:nrow(int))
+    }
+    
+    parTabLab <- rbind.data.frame(load, vars, corr, regr, int)
+  } else{
+    parTabLab <- rbind.data.frame(load, vars, corr, regr)
+  }
+  
   return(parTabLab)
 }
 
 ## Function to plot the model using tidySEM
-plot_fun <- function(fit, layout = "layout_as_tree"){
+plot_fun <- function(fit, layout = "layout_as_tree", est = TRUE){
   prep <- prepare_graph(fit, layout_algorithm = layout)
   
   prep$edges$geom_text <- TRUE # to be able to record and use the labels
   prep$nodes$geom_text <- TRUE # to be able to record and use the labels
   
-  # show the labels instead of the classical estimates
+  # show the labels instead of the classical estimates if est == FALSE
   # TODO: avoid estimating the classical model at all
-  prep$edges$label <- prep$edges$lavaan_label
+  if(est == FALSE){prep$edges$label <- prep$edges$lavaan_label}
+  # show the Bayesian estimates without significance if est == TRUE
+  if(est == TRUE){
+    lb <- prep$edges$label
+    lb1 <- gsub("***", "", lb, fixed = TRUE)
+    lb2 <- gsub("**", "", lb1, fixed = TRUE)
+    lb3 <- gsub("*", "", lb2, fixed = TRUE)
+    prep$edges$label <- lb3
+  }
   pmod <- plot(prep)
   return(pmod)
 }
@@ -114,5 +132,6 @@ convfun <- function(fit, lbls, totalN, rhatC = 1.1, neffC = 100, neff_ratioC = 0
   } else{ "yes" }
   return(list(df = df, rhatC = rhatC, neffC = neffC, neff_ratioC = neff_ratioC, conv = conv))
 }
+
 
 

@@ -13,7 +13,7 @@ server <- function(input, output) {
   # add labels to the model
   mod.lbl <- reactive({
     req(input$model)
-    mod.lbl <- label_syntax_fun(toString(input$model))
+    mod.lbl <- label_syntax_fun(toString(input$model), meanstructure = FALSE)
     return(mod.lbl)
   })
   
@@ -30,7 +30,7 @@ server <- function(input, output) {
   
   # plot the model
   output$mod.plot <- renderPlotly({
-    ggplotly(plot_fun(fit()$modFit), tooltip = "text")
+    ggplotly(plot_fun(fit()$modFit, est = FALSE), tooltip = "text")
   })
   
   click_data <- reactive({
@@ -334,4 +334,41 @@ server <- function(input, output) {
     paste0("The posterior predictive p-value equals ", fitBlav()@test[[2]]$stat, ". Values close to 0.5 indicate a model that fits the observed data.")
   })
   
+  
+  # Visualization estimated model
+  # first add posterior mean estimates to lavaan fitobject
+  fitLavEst <- reactive({
+    req(input$model, fitBlav())
+    # this is inefficient, because the lavaan model is estimated twice now, but the app breaks when meanstructure = T is added to the previous instance
+    mod.lbl <- label_syntax_fun(input$model, meanstructure = TRUE)
+    #fitLav <- sem(mod.lbl, data = dat(), meanstructure = TRUE)
+    fitLav <- sem(mod.lbl, data = PoliticalDemocracy, meanstructure = TRUE)
+    ptb <- fitBlav()@ParTable
+    
+    # remove intercepts from fitLav@ParTable to avoid them being plotted
+    sel <- which(fitLav@ParTable$op == "~1")
+    fitLav@ParTable <- lapply(fitLav@ParTable, function(x) x[-sel])
+    
+    # make sure ptb and fitLav@ParTable are ordered similarly before adding Bayesian estimates to lavaan ParTable
+    n <- length(ptb$id)
+    if(sum(ptb$lhs == fitLav@ParTable$lhs) == n &
+       sum(ptb$op == fitLav@ParTable$op) == n &
+       sum(ptb$rhs == fitLav@ParTable$rhs) == n){
+      fitLav@ParTable$est <- ptb$est
+    } else{
+      ord <- paste0(fitLav@ParTable$lhs, fitLav@ParTable$op, fitLav@ParTable$rhs)
+      ptb.df <- data.frame("id" = ptb$id, 
+                           "par" = paste0(ptb$lhs, ptb$op, ptb$rhs))
+      ids <- ptb.df[match(ord, ptb.df$par), "id"]
+      fitLav@ParTable$est <- ptb$est[ids]
+    }
+    
+    return(fitLav)
+  })
+
+  # plot the model with estimates
+  output$mod.plot.est <- renderPlotly({
+    ggplotly(plot_fun(fitLavEst(), est = TRUE), tooltip = "text")
+  })
+ 
 }
