@@ -493,7 +493,8 @@ y6 ~~ y8 ",
     "Developed by: <a href = https://saravanerp.com>Sara van Erp</a>
     <br>
     <br>
-    This Shiny app aids researchers in Bayesian structural equation modeling (BSEM) using blavaan. 
+   This Shiny app enables researchers to visualize structural equation models (SEMs) and 
+   use this visualization to easily specify prior distributions and subsequently run a Bayesian analysis using <a href = https://github.com/ecmerkle/blavaan>blavaan</a>. 
     Currently, this app is still under development, so please send bugs or comments to <a href=mailto:sara.vanerp@gmail.com>Sara van Erp</a>. 
     The source code can be found <a href = https://github.com/sara-vanerp/shinyBSEM>here</a>.
     <br>
