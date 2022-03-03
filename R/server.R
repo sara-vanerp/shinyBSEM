@@ -471,4 +471,36 @@ y6 ~~ y8 ",
     ggplotly(plot_fun(fitLavEst(), est = TRUE), tooltip = "text")
   })
  
+  output$references <- renderText({
+  "<b>Blavaan</b>
+  <br>
+  Merkle, E. C., & Rosseel, Y. (2018). blavaan: Bayesian Structural Equation Models via Parameter Expansion. <i>Journal of Statistical Software, 85,</i> 1-30.
+  <br>
+  Merkle, E. C., Fitzsimmons, E., Uanhoro, J., & Goodrich, B. (2021). Efficient Bayesian Structural Equation Modeling in Stan. <i>Journal of Statistical Software, 100,</i> 1-22.
+  <br>
+  <br>
+  <b>Fit indices in BSEM</b>
+  <br>
+  Garnier-Villarreal, M., & Jorgensen, T. D. (2020). Adapting fit indices for Bayesian structural equation modeling: Comparison to maximum likelihood. <i>Psychological Methods, 25</i>(1), 46.
+  <br>
+  <br>
+  <b>Prior sensitivity in BSEM</b>
+  <br>
+  Van Erp, S., Mulder, J., & Oberski, D. L. (2018). Prior Sensitivity Analysis in Default Bayesian Structural Equation Modeling. <i>Psychological Methods, 23</i>(2), 363-388."
+  })
+  
+  output$about <- renderText({
+    "Developed by: <a href = https://saravanerp.com>Sara van Erp</a>
+    <br>
+    <br>
+    This Shiny app aids researchers in Bayesian structural equation modeling (BSEM) using blavaan. 
+    Currently, this app is still under development, so please send bugs or comments to <a href=mailto:sara.vanerp@gmail.com>Sara van Erp</a>. 
+    The source code can be found <a href = https://github.com/sara-vanerp/shinyBSEM>here</a>.
+    <br>
+    <br>
+    <i>Acknowledgements</i>
+    <br>
+    Thanks to Caspar van Lissa for adapting the <a href = https://cjvanlissa.github.io/tidySEM/>tidySEM package</a> for use in this app."
+  })
+  
 }

@@ -62,7 +62,9 @@ ui <- navbarPage("Bayesian SEM",
                                      plotlyOutput("mod.plot.est"))),
                  #tabPanel("Prior sensitivity checks"),
                  navbarMenu("More",
-                            tabPanel("References"),
-                            tabPanel("About"))
+                            tabPanel("References",
+                                     htmlOutput("references")),
+                            tabPanel("About",
+                                     htmlOutput("about")))
                  )
 
