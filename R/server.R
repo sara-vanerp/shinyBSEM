@@ -70,10 +70,8 @@ server <- function(input, output) {
         
         renderText({
           paste0("With this prior approximately 95% prior probability is assigned in the range [", 
-                 round(quantile(rnorm(100000, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 
-                          probs = c(.025, .975)[1]), 2), " ; ",
-                 round(quantile(rnorm(100000, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 
-                          probs = c(.025, .975)[2]), 2), "]")
+                 round(qnorm(p = .025, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 2), " ; ",
+                 round(qnorm(p = .975, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 2), "]")
         })
       )
     } else if(grepl("v", click_data()) == TRUE){ # variances
@@ -96,13 +94,11 @@ server <- function(input, output) {
                   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
                   text = element_text(size = 20))
         }),
-        # TODO: check if this below works. If so, extend to other parameters as well
+        
         renderText({
           paste0("With this prior approximately 95% prior probability is assigned in the range [", 
-                 round(quantile(rgamma(100000, shape = input$priorShapeInputVar, rate = input$priorRateInputVar), 
-                                probs = c(.025, .975)[1]), 2), " ; ",
-                 round(quantile(rgamma(100000, shape = input$priorShapeInputVar, rate = input$priorRateInputVar), 
-                                probs = c(.025, .975)[2]), 2), "]")
+                 round(qgamma(p = .025, shape = input$priorShapeInputVar, rate = input$priorRateInputVar), 2), " ; ",
+                 round(qgamma(p = .975, shape = input$priorShapeInputVar, rate = input$priorRateInputVar), 2), "]")
         })
       )
     } else if(grepl("r", click_data()) == TRUE){ # correlations
@@ -123,7 +119,14 @@ server <- function(input, output) {
             theme(panel.border = element_blank(), panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
                   text = element_text(size = 20))
+        }),
+        
+        renderText({
+          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
+                 round(qbeta(p = .025, shape1 = input$priorShapeInputCorr1, shape2 = input$priorShapeInputCorr2), 2), " ; ",
+                 round(qbeta(p = .975, shape1 = input$priorShapeInputCorr1, shape2 = input$priorShapeInputCorr2), 2), "]")
         })
+        
       )
     } else if(grepl("b", click_data()) == TRUE){ # structural regression parameters
       tagList(
@@ -143,7 +146,14 @@ server <- function(input, output) {
             theme(panel.border = element_blank(), panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
                   text = element_text(size = 20))
+        }),
+        
+        renderText({
+          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
+                 round(qnorm(p = .025, mean = input$priorMeanInputRegr, sd = input$priorScaleInputRegr), 2), " ; ",
+                 round(qnorm(p = .975, mean = input$priorMeanInputRegr, sd = input$priorScaleInputRegr), 2), "]")
         })
+        
       )
     }
   })
