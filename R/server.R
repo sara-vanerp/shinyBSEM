@@ -2,6 +2,63 @@
 
 server <- function(input, output) {
   
+  output$datachoice <- renderUI({
+    
+    if(input$example == "Own data"){
+      
+      tagList(
+        # upload data
+        fileInput("file", "Upload your data file (CSV), including variable names.",
+                  multiple = FALSE,
+                  accept = c("text/csv",
+                             "text/comma-separated-values,text/plain",
+                             ".csv")
+        ),
+        radioButtons("sep", "Which character separates different fields?",
+                     choices = c(Comma = ",",
+                                 Semicolon = ";",
+                                 Tab = "\t"),
+                     selected = ","),
+        
+        tags$hr(),
+        # specify model
+        textAreaInput("model", p("Specify the model using", a("lavaan syntax.", href = "https://lavaan.ugent.be/index.html")),
+                      value = "",
+                      rows = 15),
+        # needed to avoid label_syntax_fun trying to parse empty lavaan model (although this works in shinySEM app)
+        actionButton("plotModel", 
+                     "Plot the model")
+        
+      )
+    } else if(input$example == "Example data"){
+      
+      tagList(
+        # specify model
+        textAreaInput("model", p("Specify the model using", a("lavaan syntax.", href = "https://lavaan.ugent.be/index.html")),
+                      value = "# latent variable definitions
+ind60 =~ x1 + x2 + x3
+dem60 =~ y1 + y2 + y3 + y4
+dem65 =~ y5 + y6 + y7 + y8
+# regressions
+dem60 ~ ind60
+dem65 ~ ind60 + dem60
+# residual correlations
+y1 ~~ y5
+y2 ~~ y4 + y6
+y3 ~~ y7
+y4 ~~ y8
+y6 ~~ y8 ",
+                      rows = 15),
+        
+        # needed to avoid label_syntax_fun trying to parse empty lavaan model (although this works in shinySEM app)
+        actionButton("plotModel", 
+                     "Plot the model")
+        
+      )
+    }
+    
+  })
+  
   # read data file
   dat <- reactive({
     req(input$file)
@@ -10,26 +67,24 @@ server <- function(input, output) {
              sep = input$sep)
   })
   
-  # add labels to the model
-  mod.lbl <- reactive({
-    req(input$model)
-    mod.lbl <- label_syntax_fun(toString(input$model), meanstructure = FALSE)
-    return(mod.lbl)
-  })
-  
-  # fit the model using lavaan
-  
+  # add labels to the model and fit using lavaan
   fit <- reactive({
-    req(input$model)
+    req(input$plotModel)
+    mod.lbl <- label_syntax_fun(toString(input$model), meanstructure = FALSE)
     
-    #mod.fit <- sem(mod.lbl(), data = dat())
-    mod.fit <- sem(mod.lbl(), data = PoliticalDemocracy) #TODO: use input data instead of placeholder
-    outFit <- list(modLbl = mod.lbl(), modFit = mod.fit)
+    if(input$example == "Own data"){
+      mod.fit <- sem(mod.lbl, data = dat())
+    } else if(input$example == "Example data"){
+      mod.fit <- sem(mod.lbl, data = PoliticalDemocracy)
+    }
+    
+    outFit <- list(modLbl = mod.lbl, modFit = mod.fit)
     return(outFit)
   })
   
   # plot the model
   output$mod.plot <- renderPlotly({
+    req(input$plotModel)
     ggplotly(plot_fun(fit()$modFit, est = FALSE), tooltip = "text")
   })
   
@@ -45,6 +100,7 @@ server <- function(input, output) {
   # see http://ecmerkle.github.io/blavaan/articles/prior.html for the defaults
   
   output$priorOutput <- renderUI({
+    req(input$plotModel)
     if(is.null(click_data())){
       print("Please select a parameter in the model by clicking on one of the labels")
     } else if(grepl("l", click_data()) == TRUE){ # loadings
@@ -164,7 +220,7 @@ server <- function(input, output) {
   observeEvent(input$model, {
     priors$df <- do.call(rbind, lapply(fit()$modLbl$label, init_df))
   })
-  
+   
   addPrior <- observeEvent(input$fixLoadPrior, {
     r <- which(priors$df$Parameter == click_data())
     priors$df[r, "Hyperparameter 1"] <- input$priorMeanInputLoad
@@ -246,9 +302,13 @@ server <- function(input, output) {
       df.full$modspec <- paste(df.full$lhs, df.full$op, df.full$rhs, sep = " ")
       df.full$spec <- paste(df.full$priorspec, df.full$modspec, sep ="")
       modprior <- paste(df.full$spec, collapse = " \n ")
-      #fit.blav <- bsem(modprior, data = dat(), n.chains = input$chains, burnin = input$burnin, sample = input$iter)
-      fit.blav <- bsem(modprior, data = PoliticalDemocracy,
-                       n.chains = input$chains,  burnin = input$burnin, sample = input$iter) #TODO: use input data instead of placeholder
+      if(input$example == "Own data"){
+        fit.blav <- bsem(modprior, data = dat(), 
+                         n.chains = input$chains, burnin = input$burnin, sample = input$iter)
+      } else if(input$example == "Example data"){
+        fit.blav <- bsem(modprior, data = PoliticalDemocracy,
+                         n.chains = input$chains,  burnin = input$burnin, sample = input$iter)
+      }
     }
   })
   
