@@ -13,9 +13,7 @@ ui <- navbarPage("Bayesian SEM",
                               
                               uiOutput("datachoice"),
                               tags$hr(),
-                              # use blavaan default priors
-                              actionButton("defaultPriors", 
-                                           "Use the blavaan default priors"),
+                              
                               numericInput("burnin",
                                            "Specify the number of iterations to take as burnin",
                                            value = 500),
@@ -32,14 +30,19 @@ ui <- navbarPage("Bayesian SEM",
                             mainPanel(
                               # path diagram
                               plotlyOutput("mod.plot"),
-                              # plot of the specified prior
-                              uiOutput("priorOutput"),
-                              # print warning if defaults are used
-                              textOutput("defaultWarn"),
+                              br(),
                               # print warning if the "estimate" button is clicked but not all priors are specified
                               textOutput("estWarn"),
+                              br(),
+                              # print warning if defaults are used
+                              htmlOutput("defaultWarn"),
+                              br(),
+                              # plot of the specified prior
+                              uiOutput("priorOutput"),
+                              br(),
                               # show message when done
                               textOutput("fitCompl"),
+                              br(),
                               # chosen prior settings
                               dataTableOutput("priorVals")
                             )

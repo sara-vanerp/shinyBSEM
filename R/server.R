@@ -99,10 +99,24 @@ y6 ~~ y8 ",
   # set prior hyperparameters and plot
   # see http://ecmerkle.github.io/blavaan/articles/prior.html for the defaults
   
+  # return specified priors
+  priors <- reactiveValues()
+  
+  observeEvent(input$plotModel, {
+    priors$df <- do.call(rbind, lapply(fit()$modLbl$label, init_df))
+  })
+  
   output$priorOutput <- renderUI({
     req(input$plotModel)
     if(is.null(click_data())){
-      print("Please select a parameter in the model by clicking on one of the labels")
+      tagList(
+        renderUI(HTML(paste(em("Please select a parameter in the model by clicking on one of the labels or use the blavaan default priors.")))),
+        # renderText("Please select a parameter in the model by clicking on one of the labels or use the blavaan default priors."),
+        br(),
+      # use blavaan default priors
+      actionButton("defaultPriors", 
+                   "Use the blavaan default priors"),
+      )
     } else if(grepl("l", click_data()) == TRUE){ # loadings
       tagList(
         numericInput("priorMeanInputLoad", 
@@ -114,6 +128,16 @@ y6 ~~ y8 ",
         
         actionButton("fixLoadPrior", "Set this prior"),
         
+        br(),
+        
+        renderText({
+          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
+                 round(qnorm(p = .025, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 2), " ; ",
+                 round(qnorm(p = .975, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 2), "]")
+        }),
+        
+        br(),
+        
         renderPlot({
           ggplot(data = data.frame(x = c(input$priorMeanInputLoad - 5*input$priorScaleInputLoad, input$priorMeanInputLoad + 5*input$priorScaleInputLoad)), aes(x)) + 
             stat_function(fun = dnorm, n = 101, args = list(mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad)) + 
@@ -122,13 +146,8 @@ y6 ~~ y8 ",
             theme(panel.border = element_blank(), panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
                   text = element_text(size = 20))
-        }),
-        
-        renderText({
-          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
-                 round(qnorm(p = .025, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 2), " ; ",
-                 round(qnorm(p = .975, mean = input$priorMeanInputLoad, sd = input$priorScaleInputLoad), 2), "]")
         })
+
       )
     } else if(grepl("v", click_data()) == TRUE){ # variances
       tagList(
@@ -141,6 +160,16 @@ y6 ~~ y8 ",
                      value = 0.5, min = 0, max = 100, step = 1),
         actionButton("fixVarPrior", "Set this prior"),
         
+        br(),
+        
+        renderText({
+          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
+                 round(qgamma(p = .025, shape = input$priorShapeInputVar, rate = input$priorRateInputVar), 2), " ; ",
+                 round(qgamma(p = .975, shape = input$priorShapeInputVar, rate = input$priorRateInputVar), 2), "]")
+        }),
+        
+        br(),
+        
         renderPlot({
           ggplot(data = data.frame(x = c(0, input$priorShapeInputVar/input$priorRateInputVar + 5*(input$priorShapeInputVar/input$priorRateInputVar^2))), aes(x)) + 
             stat_function(fun = dgamma, n = 101, args = list(shape = input$priorShapeInputVar, rate = input$priorRateInputVar)) + 
@@ -149,12 +178,6 @@ y6 ~~ y8 ",
             theme(panel.border = element_blank(), panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
                   text = element_text(size = 20))
-        }),
-        
-        renderText({
-          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
-                 round(qgamma(p = .025, shape = input$priorShapeInputVar, rate = input$priorRateInputVar), 2), " ; ",
-                 round(qgamma(p = .975, shape = input$priorShapeInputVar, rate = input$priorRateInputVar), 2), "]")
         })
       )
     } else if(grepl("r", click_data()) == TRUE){ # correlations
@@ -167,6 +190,16 @@ y6 ~~ y8 ",
                      value = 1, min = 0, max = 100, step = 1),
         actionButton("fixCorrPrior", "Set this prior"),
         
+        br(),
+        
+        renderText({
+          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
+                 round(qbeta(p = .025, shape1 = input$priorShapeInputCorr1, shape2 = input$priorShapeInputCorr2), 2), " ; ",
+                 round(qbeta(p = .975, shape1 = input$priorShapeInputCorr1, shape2 = input$priorShapeInputCorr2), 2), "]")
+        }),
+        
+        br(),
+        
         renderPlot({
           ggplot(data = data.frame(x = c(0, 1)), aes(x)) + 
             stat_function(fun = dbeta, n = 101, args = list(shape1 = input$priorShapeInputCorr1, shape2 = input$priorShapeInputCorr2)) + 
@@ -175,14 +208,8 @@ y6 ~~ y8 ",
             theme(panel.border = element_blank(), panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
                   text = element_text(size = 20))
-        }),
-        
-        renderText({
-          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
-                 round(qbeta(p = .025, shape1 = input$priorShapeInputCorr1, shape2 = input$priorShapeInputCorr2), 2), " ; ",
-                 round(qbeta(p = .975, shape1 = input$priorShapeInputCorr1, shape2 = input$priorShapeInputCorr2), 2), "]")
         })
-        
+
       )
     } else if(grepl("b", click_data()) == TRUE){ # structural regression parameters
       tagList(
@@ -194,6 +221,16 @@ y6 ~~ y8 ",
                      value = 10, min = 0, max = 100, step = 1),
         actionButton("fixRegrPrior", "Set this prior"),
         
+        br(),
+        
+        renderText({
+          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
+                 round(qnorm(p = .025, mean = input$priorMeanInputRegr, sd = input$priorScaleInputRegr), 2), " ; ",
+                 round(qnorm(p = .975, mean = input$priorMeanInputRegr, sd = input$priorScaleInputRegr), 2), "]")
+        }),
+        
+        br(),
+        
         renderPlot({
           ggplot(data = data.frame(x = c(input$priorMeanInputRegr - 5*input$priorScaleInputRegr, input$priorMeanInputRegr + 5*input$priorScaleInputRegr)), aes(x)) + 
             stat_function(fun = dnorm, n = 101, args = list(mean = input$priorMeanInputRegr, sd = input$priorScaleInputRegr)) + 
@@ -202,23 +239,11 @@ y6 ~~ y8 ",
             theme(panel.border = element_blank(), panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
                   text = element_text(size = 20))
-        }),
-        
-        renderText({
-          paste0("With this prior approximately 95% prior probability is assigned in the range [", 
-                 round(qnorm(p = .025, mean = input$priorMeanInputRegr, sd = input$priorScaleInputRegr), 2), " ; ",
-                 round(qnorm(p = .975, mean = input$priorMeanInputRegr, sd = input$priorScaleInputRegr), 2), "]")
         })
         
       )
     }
-  })
-  
-  # return specified priors
-  priors <- reactiveValues()
-  
-  observeEvent(input$model, {
-    priors$df <- do.call(rbind, lapply(fit()$modLbl$label, init_df))
+    
   })
    
   addPrior <- observeEvent(input$fixLoadPrior, {
@@ -266,7 +291,9 @@ y6 ~~ y8 ",
   })
   
   defaultWarn <- eventReactive(input$defaultPriors, {
-    "Warning: carefully consider the prior distribution for each parameter. The default settings from blavaan might not be suitable for the application at hand. Always conduct a prior sensitivity analysis, even when default priors are being used."
+    paste("<b>Warning</b>: carefully consider the prior distribution for each parameter. 
+          The default settings from blavaan might not be suitable for the application at hand. 
+          Always conduct a prior sensitivity analysis, even when default priors are being used.")
   })
   
   output$defaultWarn <- renderText({
