@@ -324,7 +324,7 @@ y6 ~~ y8 ",
     indNA <- complete.cases(priors$df)
     if(all(indNA) == TRUE){ # if all priors are specified: start model estimation
       priors$df$priorspec <- apply(priors$df, 1, priorspec) # add priors in correct form for blavaan to priors$df
-      df.full <- merge(mod.lbl(), priors$df, by.x = "label", by.y = "Parameter") # combine prior specification with model labels
+      df.full <- merge(fit()$modLbl, priors$df, by.x = "label", by.y = "Parameter") # combine prior specification with model labels
       # create model syntax with priors
       df.full$modspec <- paste(df.full$lhs, df.full$op, df.full$rhs, sep = " ")
       df.full$spec <- paste(df.full$priorspec, df.full$modspec, sep ="")
@@ -392,7 +392,7 @@ y6 ~~ y8 ",
 
   convOut <- reactive({
     req(fitBlav())
-    convfun(fitBlav(), lbls = mod.lbl(), totalN = input$iter*input$chains)
+    convfun(fitBlav(), lbls = fit()$modLbl, totalN = input$iter*input$chains)
   })
   
   output$convInfo <- renderDataTable({
@@ -409,18 +409,18 @@ y6 ~~ y8 ",
   convWarning <- reactive({
     req(convOut())
     if(convOut()$conv == "yes"){
-      "The model has converged according to the following criteria: all parameters have: 
-      1) a value for the potential scale reduction statistic (Rhat) smaller than or equal to 1.1;
-      2) an effective number of iterations of at least 100; and
-      3) a ratio of effective number of iterations to the total number of iterations of at least 0.1.
+      "The model has converged according to the following criteria: all parameters have: <br>
+      1) a value for the potential scale reduction statistic (Rhat) smaller than or equal to 1.1; <br>
+      2) an effective number of iterations of at least 100; and <br>
+      3) a ratio of effective number of iterations to the total number of iterations of at least 0.1. <br>
       Please note that these criteria are based on heuristics and this is therefore no guarantee that the model has indeed converged.
       To further assess convergence, it is possible to download the blavaan fitobject and further process it in R. 
       Please see the references for more resources on how to assess convergence."
     } else{
-      "The model has not converged. At least one parameter shows one or more of the following:
-      1) a value for the potential scale reduction statistic (Rhat) greater than 1.1;
-      2) an effective number of iterations less than 100; 
-      3) a ratio of effective number of iterations to the total number of iterations smaller than 0.1.
+      "The model has not converged. At least one parameter shows one or more of the following: <br>
+      1) a value for the potential scale reduction statistic (Rhat) greater than 1.1; <br>
+      2) an effective number of iterations less than 100; <br>
+      3) a ratio of effective number of iterations to the total number of iterations smaller than 0.1.<br>
       Please increase the number of iterations or reconsider your model. The current results should not be trusted."
     }
   })
