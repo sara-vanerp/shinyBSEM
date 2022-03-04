@@ -127,9 +127,9 @@ convfun <- function(fit, lbls, totalN, rhatC = 1.1, neffC = 100, neff_ratioC = 0
   lbls.sel <- lbls[, c("Parameter", "label")]
   colnames(lbls.sel) <- c("Parameter", "Label")
   df <- merge(lbls.sel, convdf, by = "Parameter")
-  conv <- if(sum(rhat > rhatC, na.rm = TRUE) != 0 && sum(neff < neffC, na.rm = TRUE) != 0 && sum(neff_ratio < neff_ratioC, na.rm = TRUE) != 0){
-    "no"
-  } else{ "yes" }
+  conv <- if(sum(rhat > rhatC, na.rm = TRUE) == 0 && sum(neff < neffC, na.rm = TRUE) == 0 && sum(neff_ratio < neff_ratioC, na.rm = TRUE) == 0){
+    "yes"
+  } else{ "no" }
   return(list(df = df, rhatC = rhatC, neffC = neffC, neff_ratioC = neff_ratioC, conv = conv))
 }
 
