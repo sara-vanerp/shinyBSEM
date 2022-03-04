@@ -417,7 +417,7 @@ y6 ~~ y8 ",
       To further assess convergence, it is possible to download the blavaan fitobject and further process it in R. 
       Please see the references for more resources on how to assess convergence."
     } else{
-      "The model has not converged. At least one parameter shows one or more of the following: <br>
+      "The model has <b>not</b> converged. At least one parameter shows one or more of the following: <br>
       1) a value for the potential scale reduction statistic (Rhat) greater than 1.1; <br>
       2) an effective number of iterations less than 100; <br>
       3) a ratio of effective number of iterations to the total number of iterations smaller than 0.1.<br>
