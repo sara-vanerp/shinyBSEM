@@ -718,5 +718,7 @@ y6 ~~ y8 ",
     <br>
     Thanks to Caspar van Lissa for adapting the <a href = https://cjvanlissa.github.io/tidySEM/>tidySEM package</a> for use in this app."
   })
-  
 }
+
+##### Run app -----
+shinyApp(ui, server)
